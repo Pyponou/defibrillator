@@ -1,0 +1,202 @@
+model DefibrillatorMAE /*imports bsp_input, bsp_output*/ {
+
+  primitiveType Integer;
+  primitiveType Boolean;
+
+  package deployment imports bsp_smt32, system {
+
+		instance instSUS of SUS {
+
+		}
+	}
+
+	package bsp_meta imports system {
+
+	}
+
+	package bsp_smt32 imports bsp_meta  {
+
+	}
+
+  package system imports bsp_meta {
+
+		class SUS {
+      public composite defibrillator[1-1] : Defibrillator;
+      public composite capacitor[1-1] : Capacitor;
+      public composite user[1-1] : User;
+      public composite calculator[1-1] : Calculator;
+      public composite ledOrange[1-1] : Led;
+      // public composite button[1-1] : Button;
+
+      connector "c1" : Defibrillator_Capacitor between defibrillator and capacitor;
+      connector "c2" : Defibrillator_User between defibrillator and user;
+      connector "c3" : Defibrillator_Calculator between defibrillator and calculator;
+      connector "c4" : Defibrillator_Led between ledOrange and defibrillator;
+      // connector "c5" : Defibrillator_Button between button and defibrillator;
+		}
+
+		signal lead_On;
+    signalEvent lead_On_SE of lead_On;
+
+		signal lead_Off;
+    signalEvent lead_Off_SE of lead_Off;
+
+		signal VI; //Ventricular Issue :  Tachycardia or Fibrillation
+    signalEvent VI_SE of VI;
+
+    signal NoVI; //When there is no issue detected
+    signalEvent NoVI_SE of NoVI;
+
+    signal startCharge;
+    signalEvent startCharge_SE of startCharge; //start the charge of the capacitor
+
+		signal capacitor_rdy;
+    signalEvent capacitor_rdy_SE of capacitor_rdy; //capacitor is ready/charged
+
+		signal defibrillate;
+    signalEvent defibrillate_SE of defibrillate; //button pressed
+
+    signal abort;
+    signalEvent abort_SE of abort;//to abort the capacitor and discharge it
+
+    signal deliverShock;
+    signalEvent deliverShock_SE of deliverShock;//to deliver the shock to the patient
+
+    signal ledOn; //to control the orange led
+    signalEvent ledOn_SE of ledOn;
+    signal ledOff;
+    signalEvent ledOff_SE of ledOff;
+
+    // signal buttonPressed;
+    // signalEvent buttonPressed_SE of buttonPressed;
+
+    association Defibrillator_Capacitor {
+      defibrillator[1-1] : Defibrillator in Defibrillator_Capacitor;
+      capacitor[1-1] : Capacitor in Defibrillator_Capacitor;
+    }
+
+    association Defibrillator_User {
+      defibrillator[1-1] : Defibrillator in Defibrillator_User;
+      user[1-1] : User in Defibrillator_User;
+    }
+
+    association Defibrillator_Calculator {
+      defibrillator[1-1] : Defibrillator in Defibrillator_Calculator;
+      calculator[1-1] : Calculator in Defibrillator_Calculator;
+    }
+
+    association Defibrillator_Led {
+      defibrillator[1-1] : Defibrillator in Defibrillator_Led;
+    }
+
+    // association Defibrillator_Button{
+    //   button[1-1] : Button in Defibrillator_Button;
+    // }
+
+    class |Defibrillator| behavesAs SM receives VI(VI), NoVI(NoVI), lead_Off(lead_Off), capacitor_rdy(capacitor_rdy), defibrillate(defibrillate), lead_On(lead_On)
+    {
+      ledOrange[1-1] : Led in Defibrillator_Led;
+      stateMachine SM
+      {
+        region R
+        {
+          Initial -> Measurement;
+					Measurement -> Charging : VI_SE / opaqueBehavior = 'send(startCharge, capacitor);' in C;;
+					Measurement -> Waiting : lead_Off_SE / ;
+					Charging -> Discharge_Enable : capacitor_rdy_SE / opaqueBehavior = 'send(ledOn, ledOrange);' in C;;
+					Charging -> Internal_Discharge : lead_Off_SE / opaqueBehavior = 'send(abort, capacitor);' in C;;
+          Charging -> Internal_Discharge : NoVI_SE / opaqueBehavior = 'send(abort, capacitor);' in C;;
+					Discharge_Enable -> Charging : defibrillate_SE / opaqueBehavior = 'send(deliverShock, capacitor); send(ledOff, ledOrange);' in C;;
+          Discharge_Enable -> Charging : NoVI_SE / opaqueBehavior = 'send(ledOff, ledOrange);' in C;;
+					Discharge_Enable -> Internal_Discharge : lead_Off_SE / opaqueBehavior = 'send(abort, capacitor); send(ledOff, ledOrange);' in C;;
+					Internal_Discharge -> Measurement : lead_On_SE / ;
+					Internal_Discharge -> Waiting : lead_Off_SE / ;
+					Waiting -> Measurement : lead_On_SE / ;
+          initial pseudoState Initial;
+        }//end R
+      }//end SM
+    }//end class
+
+    class |Capacitor| behavesAs SM receives startCharge(startCharge), abort(abort), deliverShock(deliverShock)
+    {
+      stateMachine SM
+      {
+        region R
+        {
+          Initial -> Idle;
+          Idle -> Charging : startCharge_SE / ;
+          Charging -> Idle : abort_SE / ;
+          Charging -> Charged : / opaqueBehavior = 'send(capacitor_rdy, defibrillator);' in C;;//TODO : add the after
+          Charged -> Idle : abort_SE / ;
+          Charged -> Idle : deliverShock_SE / ;
+          Abort -> Idle : / ;
+          initial pseudoState Initial;
+        }//end R
+      }//end SM
+    }//end class
+
+    //TODO : Replace this class using buttons
+    class |User| behavesAs SM receives startCharge(startCharge), capacitor_rdy(capacitor_rdy)
+    {
+      stateMachine SM
+      {
+        region R
+        {
+          Initial -> Idle;
+          Idle -> Helping : / opaqueBehavior = 'send(lead_On, defibrillator);' in C;;
+          Helping -> Idle : / opaqueBehavior = 'send(lead_Off, defibrillator);' in C;;
+          Helping -> LifeSaving : [constraint "" is opaqueExpression = 'defibrillator.ledOrange.isOn == 1' in C;] / ;
+          LifeSaving -> Idle : / opaqueBehavior = 'send(lead_Off, defibrillator);' in C;;
+          LifeSaving -> Helping : / opaqueBehavior = 'send(defibrillate, defibrillator);' in C;;
+          initial pseudoState Initial;
+        }//end R
+      }//end SM
+    }//end class
+
+    class |Calculator| behavesAs SM
+    {
+      stateMachine SM
+      {
+        region R
+        {
+          Initial -> Calculating;
+          Calculating -> Calculating : / opaqueBehavior = 'send(VI, defibrillator); /*target_ms_sleep(100);*/' in C;;
+          Calculating -> Calculating : / opaqueBehavior = 'send(NoVI, defibrillator); /*target_ms_sleep(100);*/' in C;;
+          initial pseudoState Initial;
+        }//end R
+      }//end SM
+    }//end class
+
+    //TODO : Add  button
+    //package bsp_output {
+    	class |Led| behavesAs SM receives ledOn(ledOn), ledOff(ledOff) {
+    		private isOn[1-1] : Boolean;
+    		stateMachine SM {
+    			region R {
+    				Initial -> Idle;
+            Idle -> Idle : ledOn_SE / opaqueBehavior = 'isOn = 1;' in C;;
+            Idle -> Idle : ledOff_SE / opaqueBehavior = 'isOn = 0;' in C;;
+    				initial pseudoState Initial;
+    			}
+    		}
+    	}
+    //}
+
+    // package bsp_input {
+    	// class |Button| behavesAs SM receives buttonPressed(buttonPressed) {
+    	// 	defibrillator[1-1] : defibrillator in Controller_Button;
+      //
+    	// 	stateMachine SM {
+    	// 		region R {
+    	// 			Initial -> Released;
+    	// 			Released -> Pressed : buttonPressed_SE / ;
+    	// 			Pressed -> Released : /
+    	// 					opaqueBehavior = 'send(defibrillate, defibrillator);' in C;;
+    	// 			initial pseudoState Initial;
+    	// 		}
+    	// 	}
+    	// }
+
+  }//end system
+
+}//end model

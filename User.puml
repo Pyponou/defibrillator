@@ -1,0 +1,11 @@
+@startuml
+hide empty description
+[*] --> Idle
+
+Idle --> Helping : /send(lead_On)
+Helping --> Idle : /send(lead_Off)
+Helping -> LifeSaving : ledOn == true
+LifeSaving --> Helping : /send(defibrillate)
+LifeSaving --> Idle :  /send(lead_Off)
+
+@enduml

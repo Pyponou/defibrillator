@@ -1,0 +1,14 @@
+@startuml
+hide empty description
+[*] --> Measurement
+'VI is VT | VF'
+Measurement -right-> Charging : VI / send(startCharge)
+Charging --> Discharge_Enable : capacitor_rdy / switchOn(ledOrange)
+Discharge_Enable --> Charging : defibrillate || NoVI / send(deliverShock); switchOff(ledOrange)
+Discharge_Enable --> Internal_Discharge : lead_Off /send(abort); switchOff(ledOrange)
+Internal_Discharge --> Measurement : lead_On
+Charging --> Internal_Discharge : lead_Off || NoVI / send(abort);
+Internal_Discharge --> Waiting : lead_Off
+Waiting -right-> Measurement : lead_On
+Measurement --> Waiting : lead_Off
+@enduml

@@ -1,0 +1,9 @@
+@startuml
+hide empty description
+[*] --> Idle
+Idle --> Charging : startCharge
+Charging --> Charged : after(3s) / send(capacitor_rdy);
+Charging --> Idle : abort
+Charged --> Idle : abort
+Charged --> Idle : defibrillate
+@enduml
