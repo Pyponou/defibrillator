@@ -1,0 +1,10 @@
+@startuml
+hide members
+hide  circle
+
+Calculator "1"-"1" Defibrillator
+Capacitor "1"--"1" Defibrillator
+User "1"-left-"1" Defibrillator
+Led "1"-down-* Defibrillator
+
+@enduml
