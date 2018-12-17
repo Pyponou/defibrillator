@@ -25,7 +25,7 @@ It can also send events to the Orange Led :
 - *switchOn* : to switch on the led.
 - *switchOff* : to switch off the led.
 
-![Alt text](/defibrillator_SimpleMAE.png?raw=true "Defibrillator State Machine")
+![Alt text](images/defibrillator_SimpleMAE.png?raw=true "Defibrillator State Machine")
 
 ### User
 The User is at the moment represented as a class but should not exist, it work with buttons instead.
@@ -39,7 +39,7 @@ It can send events to the defibrillator :
 - *lead_On* : indicate that the patient is now connected.
 - *lead_Off* : indicate the the patient is disconnected.
 
-![Alt text](/User.png?raw=true "User State Machine")
+![Alt text](images/User.png?raw=true "User State Machine")
 
 ### Capacitor
 
@@ -53,7 +53,7 @@ The class has 3 states :
 It can send events to the defibrillator :
 - *capacitor_rdy* : to indicate it is ready the release the energy.
 
-![Alt text](/capacitor_MAE.png?raw=true "Capacitor State Machine")
+![Alt text](images/capacitor_MAE.png?raw=true "Capacitor State Machine")
 
 ### Calculator
 
