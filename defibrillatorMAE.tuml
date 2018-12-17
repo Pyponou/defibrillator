@@ -142,7 +142,8 @@ model DefibrillatorMAE /*imports bsp_input, bsp_output*/ {
       {
         region R
         {
-          Initial -> Idle : / opaqueBehavior = 'send(lead_Off, defibrillator);' in C;;
+          Initial -> Idle;
+          Idle -> Idle : / opaqueBehavior = 'send(lead_Off, defibrillator);' in C;;
           Idle -> Helping : / opaqueBehavior = 'send(lead_On, defibrillator);' in C;;
           Helping -> Idle : / opaqueBehavior = 'send(lead_Off, defibrillator);' in C;;
           Helping -> LifeSaving : [constraint "" is opaqueExpression = 'defibrillator.ledOrange.isOn == 1' in C;] / ;
