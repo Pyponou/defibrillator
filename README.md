@@ -4,6 +4,11 @@ This is a simplified system representing an automated external defibrillator.
 This project has been made to simulate its behaviour using [plug-obp](https://plug-obp.github.io/).
 
 ## Class description
+
+This system is divided in 5 class (Defibrillator, Capacitor, Led, User) described below.
+
+![Alt text](images/architecture.png?raw=true "Architecture")
+
 ### Defibrillator
 This class is the "controller" of the system, it receives events from the User, the Calculator and the Capacitor and can send events to the Capacitor and the Led.
 
@@ -21,7 +26,7 @@ It can send events to the capacitor :
 - *deliverShock* : indicate that the capacitor can release the energy to the patient.
 - *abort* : indicate that the capacitor must discharge.
 
-It can also send events to the Orange Led : 
+It can also send events to the orange Led : 
 - *switchOn* : to switch on the led.
 - *switchOff* : to switch off the led.
 
