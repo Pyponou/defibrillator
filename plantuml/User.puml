@@ -1,6 +1,6 @@
 @startuml
 hide empty description
-[*] --> Idle
+[*] -left-> Idle : /send(lead_Off)
 
 Idle --> Helping : /send(lead_On)
 Helping --> Idle : /send(lead_Off)
