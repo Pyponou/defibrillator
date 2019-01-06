@@ -128,7 +128,7 @@ model DefibrillatorMAE /*imports bsp_input, bsp_output*/ {
           Charging -> Idle : abort_SE / ;
           Charging -> Charged : / opaqueBehavior = 'send(capacitor_rdy, defibrillator);' in C;;//TODO : add the after
           Charged -> Idle : abort_SE / ;
-          Charged -> Idle : deliverShock_SE / ;
+          Charged -> Charging : deliverShock_SE / ;
           Abort -> Idle : / ;
           initial pseudoState Initial;
         }//end R

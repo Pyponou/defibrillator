@@ -5,5 +5,5 @@ Idle --> Charging : startCharge
 Charging --> Charged : after(3s) / send(capacitor_rdy);
 Charging --> Idle : abort
 Charged --> Idle : abort
-Charged --> Idle : deliverShock
+Charged --> Charging : deliverShock
 @enduml
